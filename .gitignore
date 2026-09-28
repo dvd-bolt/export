@@ -1,0 +1,13 @@
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Extension packages & keys
+*.zip
+*.crx
+*.pem
+
+# Python cache (for icon generator)
+__pycache__/
+*.pyc

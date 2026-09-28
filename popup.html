@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Chat Exporter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2C7.373 2 2 7.373 2 14s5.373 12 12 12 12-5.373 12-12S20.627 2 14 2Z" fill="url(#grad1)"/>
+            <path d="M14 7.5C14 7.5 10 11 10 14.5C10 18 14 20.5 14 20.5C14 20.5 18 18 18 14.5C18 11 14 7.5 14 7.5Z" fill="white" opacity="0.9"/>
+            <path d="M9.5 9.5L12 13M18.5 9.5L16 13M9.5 19L12 15.5M18.5 19L16 15.5" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#4f8eff"/>
+                <stop offset="50%" stop-color="#a855f7"/>
+                <stop offset="100%" stop-color="#ec4899"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">Gemini</span>
+          <span class="logo-sub">Chat Exporter</span>
+        </div>
+      </div>
+      <div class="version-badge">v1.1</div>
+    </header>
+
+    <!-- ── Status area ────────────────────────────────────────────────────── -->
+    <div class="status-area" id="statusArea">
+      <div class="status-icon idle" id="statusIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <p class="status-text" id="statusText">Готов к экспорту</p>
+      <p class="status-hint" id="statusHint">Откройте чат в Gemini и выберите действие</p>
+    </div>
+
+    <!-- ── Progress block (Export All) ───────────────────────────────────── -->
+    <div class="progress-block hidden" id="progressBlock">
+      <div class="progress-header">
+        <span class="progress-label" id="progressLabel">Подготовка…</span>
+        <span class="progress-counter" id="progressCounter"></span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        <div class="progress-glow"  id="progressGlow"  style="width:0%"></div>
+      </div>
+      <p class="progress-hint" id="progressHint">Фоновые вкладки открываются и закрываются автоматически</p>
+    </div>
+
+    <!-- ── Preview (current chat) ─────────────────────────────────────────── -->
+    <div class="preview-area hidden" id="previewArea">
+      <div class="preview-header">
+        <span class="preview-label">Предпросмотр</span>
+        <div class="preview-stats" id="previewStats"></div>
+      </div>
+      <div class="preview-content" id="previewContent"></div>
+    </div>
+
+    <!-- ── Divider ────────────────────────────────────────────────────────── -->
+    <div class="section-divider">
+      <span class="divider-label">Действия</span>
+    </div>
+
+    <!-- ── Actions ────────────────────────────────────────────────────────── -->
+    <div class="actions">
+
+      <!-- Export current chat -->
+      <button class="btn btn-primary" id="exportBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span id="exportBtnText">Текущий чат → .md</span>
+        <div class="btn-shimmer"></div>
+      </button>
+
+      <!-- Export ALL chats -->
+      <button class="btn btn-all" id="exportAllBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <div class="btn-all-text">
+          <span id="exportAllBtnText">Все чаты → ZIP</span>
+          <span class="btn-all-sub">Открывает каждый чат в фоне</span>
+        </div>
+        <div class="btn-shimmer btn-shimmer-slow"></div>
+      </button>
+
+      <!-- Cancel button (visible during export all) -->
+      <button class="btn btn-cancel hidden" id="cancelBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Отменить экспорт
+      </button>
+
+      <!-- Secondary actions (after single-chat export) -->
+      <div class="secondary-actions hidden" id="secondaryActions">
+        <button class="btn btn-ghost" id="copyBtn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Скопировать MD
+        </button>
+        <button class="btn btn-ghost" id="downloadBtn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <polyline points="9 15 12 18 15 15"/>
+          </svg>
+          Скачать .md
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <footer class="footer">
+      <span>Данные обрабатываются локально</span>
+      <div class="footer-dot"></div>
+      <span>&#x1F512; Приватность</span>
+    </footer>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
